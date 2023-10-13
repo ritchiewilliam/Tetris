@@ -26,14 +26,18 @@ int Grid::placeBlock() {
     delete(positions);
 
     //Store type for next initialization and get rid of old block
-    // int notType = block->getType();
-
-
+    int prevType = block->getType();
 
     delete(block);
 
+    int newType = prevType;
+
+    while(prevType == newType) {
+        newType = rand() % typeNums;
+    }
+
     //Create new block different from the last one
-    block = new Block(rand() % typeNums);
+    block = new Block(newType);
 
     //Make sure nothing is in the way of the newly created block
     positions = block->getPositions();
