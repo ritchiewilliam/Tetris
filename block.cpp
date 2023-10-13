@@ -3,22 +3,25 @@
 #include <cstring>
 #include "block.h"
 
-const int typeNums = 7;
-
 Block::Block() {
-    srand(time(nullptr));
     type = rand()% typeNums;
 
     std::memcpy(position, TEMPLATES[type], sizeof(point) * typeNums);
     pivot = position[0];
 }
 
-Block::Block(int notType) {
-    srand(time(nullptr));
-    type = notType;
-    while(type == notType) {
-        type = rand() % typeNums;
-    }
+// Block::Block(int notType) {
+//     srand(time(nullptr));
+//     type = notType;
+//     while(type == notType) {
+//         type = rand() % typeNums;
+//     }
+//     std::memcpy(position, TEMPLATES[type], sizeof(point) * typeNums);
+//     pivot = position[0];
+// }
+
+Block::Block(int type) {
+    this->type = type;
     std::memcpy(position, TEMPLATES[type], sizeof(point) * typeNums);
     pivot = position[0];
 }

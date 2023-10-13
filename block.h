@@ -8,6 +8,7 @@ typedef struct{
     int y;
 } point;
 
+const int typeNums = 7;
 const int blockSize = 4;
 
 class Block {

@@ -7,8 +7,9 @@ Grid::Grid() {
     for(int i = 0; i < GRID_X; i++) {
         grid[i] = new unsigned int[GRID_Y];
     }
+    srand(time(nullptr));
 
-    block = new Block;
+    block = new Block(rand() % typeNums);
 //    score = 0;
 }
 
@@ -25,11 +26,14 @@ int Grid::placeBlock() {
     delete(positions);
 
     //Store type for next initialization and get rid of old block
-    int notType = block->getType();
+    // int notType = block->getType();
+
+
+
     delete(block);
 
     //Create new block different from the last one
-    block = new Block(notType);
+    block = new Block(rand() % typeNums);
 
     //Make sure nothing is in the way of the newly created block
     positions = block->getPositions();
@@ -87,9 +91,8 @@ void Grid::clearRows(point * positions) {
     for(int clearedRow : clearedRows) {
         if(clearedRow != -1) {
             int adjacent;
-            for(adjacent = l - 1; abs(groupings[0][adjacent] - clearedRow) != 1 && adjacent > 0; adjacent--) {
-                std::cout << adjacent << std::endl;
-            }
+            for(adjacent = l - 1; abs(groupings[0][adjacent] - clearedRow) != 1 && adjacent > 0; adjacent--);
+
             if (!l || abs(groupings[0][adjacent] - clearedRow) == 1) {
                 groupings[0][l] = clearedRow;
                 l++;
