@@ -12,14 +12,19 @@ public:
     int moveBlock(unsigned int);
     void clearRows(point *);
     void getGrid(unsigned int **);
+
 //    int getScore();
 
 private:
     unsigned int **grid;
     Block * block;
+    bool blockSaved = false;
+    Block * savedBlock;
 //    int score;
 
-    void shiftRows(int[blockSize], int n);
+    void shiftRows(int[blockSize], int);
+    int differentType(int);
+    void saveBlock();
 };
 
 

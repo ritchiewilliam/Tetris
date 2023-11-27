@@ -10,6 +10,7 @@ Grid::Grid() {
     srand(time(nullptr));
 
     block = new Block(rand() % typeNums);
+    savedBlock = nullptr;
 //    score = 0;
 }
 
@@ -30,14 +31,8 @@ int Grid::placeBlock() {
 
     delete(block);
 
-    int newType = prevType;
-
-    while(prevType == newType) {
-        newType = rand() % typeNums;
-    }
-
     //Create new block different from the last one
-    block = new Block(newType);
+    block = new Block(differentType(prevType));
 
     //Make sure nothing is in the way of the newly created block
     positions = block->getPositions();
@@ -48,6 +43,9 @@ int Grid::placeBlock() {
             return 1;
         }
     }
+
+    blockSaved = false; //New block so saved block can be replaced again
+
     delete(positions);
     return 0;
 }
@@ -66,6 +64,12 @@ int Grid::moveBlock(unsigned int key) {
         case Direction::UP:
             block->rotate(grid);
             break;
+        case Direction::SAVE:
+            if(!blockSaved) {
+                saveBlock();
+                blockSaved = true; //You should only be able to save block once to prevent constant swapping
+            }
+        break;
     }
     return 0;
 }
@@ -187,6 +191,30 @@ void Grid::getGrid(unsigned int ** dest) {
     }
 
     delete(blockPositions);
+}
+
+int Grid::differentType(int prevType) {
+    int newType = prevType;
+
+    while(prevType == newType) {
+        newType = rand() % typeNums;
+    }
+    return newType;
+}
+
+void Grid::saveBlock() {
+    if(savedBlock != nullptr) {
+        Block * temp;
+        block->resetPositions();
+        temp = block;
+        block = savedBlock;
+        savedBlock = temp;
+    }
+    else {
+        block->resetPositions();
+        savedBlock = block;
+        block = new Block(differentType(savedBlock->getType()));
+    }
 }
 //
 //int Grid::getScore() {

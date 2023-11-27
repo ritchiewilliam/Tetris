@@ -2,10 +2,16 @@
 #include <cstring>
 #include "block.h"
 
+
 Block::Block() {
     type = rand()% typeNums;
 
-    std::memcpy(position, TEMPLATES[type], sizeof(point) * typeNums);
+//    std::memcpy(position, TEMPLATES[type], sizeof(point) * blockSize);
+    for(int i = 0; i < blockSize; i++) {
+        position[i].x = TEMPLATES[type][i].x;
+        position[i].y = TEMPLATES[type][i].y;
+    }
+
     pivot = position[0];
 }
 
@@ -21,7 +27,11 @@ Block::Block() {
 
 Block::Block(int type) {
     this->type = type;
-    std::memcpy(position, TEMPLATES[type], sizeof(point) * typeNums);
+//    std::memcpy(position, TEMPLATES[type], sizeof(point) * blockSize);
+    for(int i = 0; i < blockSize; i++) {
+        position[i].x = TEMPLATES[type][i].x;
+        position[i].y = TEMPLATES[type][i].y;
+    }
     pivot = position[0];
 }
 
@@ -66,11 +76,16 @@ int Block::translate(unsigned int ** grid, Direction d) {
 }
 
 point * Block::getPositions() {
-    auto *rtn = new point[4];
+    auto *rtn = new point[blockSize];
     memcpy(rtn, position, sizeof(point) * blockSize);
 
     return rtn;
 }
+
+void Block::resetPositions() {
+    memcpy(position, TEMPLATES[type], sizeof(point) * blockSize);
+}
+
 unsigned int Block::getColor(){
     return COLORS[type];
 }

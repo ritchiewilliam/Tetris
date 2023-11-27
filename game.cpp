@@ -26,11 +26,8 @@ inline void init() {
     gc = XCreateGC(dpy, win, 0, nullptr);
 
     XMapWindow(dpy, win);
-    XFlush(dpy);
-
     blockDim = WIDTH/10;
     blockDim = (blockDim * 20) > HEIGHT ? HEIGHT/20 : blockDim;
-
 }
 
 void paintGrid(/*unsigned int ** result*/) {
@@ -41,16 +38,17 @@ void paintGrid(/*unsigned int ** result*/) {
             XFillRectangle(dpy, win, gc, i*blockDim, j*blockDim, blockDim, blockDim);
         }
     }
-    XFlush(dpy);
+//    XFlush(dpy);
 }
 
 void timedMove(int signum) {
     clock_gettime(CLOCK_TAI, &t_end);
     long d = ((t_end.tv_sec * 1000) + (t_end.tv_nsec / 1000000)) - ((t_begin.tv_sec * 1000) + (t_begin.tv_nsec / 1000000));
-    if(!grid.moveBlock(DOWN) && d > 150) {
+    if(!grid.moveBlock(DOWN) && d > 200) {
         gameover = grid.placeBlock();
     }
     paintGrid();
+    XFlush(dpy);
 
     if(gameover){
         exit(0);
