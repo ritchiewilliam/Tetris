@@ -1,7 +1,10 @@
 #ifndef TETRIS_BLOCK_H
 #define TETRIS_BLOCK_H
 
-enum Direction {UP = 111, DOWN = 116, LEFT = 113, RIGHT = 114, SPACE = 65, SAVE = 54};
+#include <SDL2/SDL_keycode.h>
+//enum Direction {UP = 111, DOWN = 116, LEFT = 113, RIGHT = 114, SPACE = 65, SAVE = 54};
+enum Direction {UP = SDLK_UP, DOWN = SDLK_DOWN, LEFT = SDLK_LEFT, RIGHT = SDLK_RIGHT, SPACE = SDLK_SPACE, SAVE = SDLK_c};
+
 
 typedef struct{
     int x;

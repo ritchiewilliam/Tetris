@@ -12,6 +12,7 @@ public:
     int moveBlock(unsigned int);
     void clearRows(point *);
     void getGrid(unsigned int **);
+    void quit();
 
 //    int getScore();
 

@@ -14,6 +14,15 @@ Grid::Grid() {
 //    score = 0;
 }
 
+void Grid::quit(){
+    for(int i = 0; i < GRID_X; i++) {
+        delete(grid[i]);
+    }
+    delete(grid);
+    delete(block);
+    delete(savedBlock);
+}
+
 int Grid::placeBlock() {
     //Move block as far down as it can go
     while(block->translate(grid, DOWN));
