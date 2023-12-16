@@ -1,32 +1,31 @@
-//
-// Created by william on 14/12/23.
-//
-
-//#include "game.h"
 #include <iostream>
 #include <SDL2/SDL.h>
+#include <string>
 #include "grid.h"
+#include "texture.h"
 
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 
+Texture *textures = nullptr;
+
 Grid grid;
-unsigned int * renderedGrid[GRID_X];
+int * renderedGrid[GRID_X];
 int blockDim;
 bool running;
 
 void quit() {
-
     running = false;
 
-    for(unsigned int *& i : renderedGrid) {
+    for(int *& i : renderedGrid) {
         delete(i);
     }
     grid.quit();
+    textures->quit();
     SDL_Quit();
 }
 
-bool init(const char * title, int xpos, int ypos, int width, int height, int flags) {
+bool init_sdl(const char * title, int xpos, int ypos, int width, int height, int flags) {
     // initialize SDL
     if(SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO) >= 0) {
         // if succeeded create our window
@@ -56,14 +55,6 @@ bool init(const char * title, int xpos, int ypos, int width, int height, int fla
     {
         return false; // sdl could not initialize
     }
-
-    blockDim = width/10;
-    blockDim = (blockDim * 20) > height ? height/20 : blockDim;
-
-    for(unsigned int *& i : renderedGrid) {
-        i = new unsigned int[GRID_Y];
-    }
-
     return true;
 }
 
@@ -71,15 +62,14 @@ void render() {
     grid.getGrid(renderedGrid);
     SDL_Rect rect;
 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+//    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
     SDL_RenderClear(renderer);
 
     for(int i = 0; i < 10; i++) {
         for(int j = 0; j < 20; j++) {
-            SDL_SetRenderDrawColor(renderer, renderedGrid[i][j] >> 16, (renderedGrid[i][j] >> 8) & 0xFF, renderedGrid[i][j] & 0xFF, 255);
             rect = {i*blockDim, j*blockDim, blockDim, blockDim};
-            SDL_RenderFillRect(renderer, &rect);
+            textures->renderTexture(renderer, &rect, renderedGrid[i][j]);
         }
     }
     // show the window
@@ -108,13 +98,28 @@ bool update() {
     return true;
 }
 
-int main() {
+int main(int argc, char ** argv) {
+    int width = 700;
+    int height = width * 2;
 
-    if(init("Tetris", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 700, 700 * 2, SDL_WINDOW_SHOWN)) {
+    if(init_sdl("Tetris", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN)) {
         running = true;
     }
     else {
         return 1;
+    }
+//    std::string path = argv[0];
+    if(argc > 1) {
+        textures = new Texture(renderer, argv[0], argv[1]);
+    }
+    else {
+        textures = new Texture(renderer, argv[0], nullptr);
+    }
+    blockDim = width/10;
+    blockDim = (blockDim * 20) > height ? height/20 : blockDim;
+
+    for(int *& i : renderedGrid) {
+        i = new int[GRID_Y];
     }
 
     Uint32 lastTime = SDL_GetTicks();
@@ -126,7 +131,6 @@ int main() {
             running = update();
             lastTime = currentTime;
         }
-
     }
 
     quit();

@@ -1,9 +1,8 @@
 #ifndef TETRIS_BLOCK_H
 #define TETRIS_BLOCK_H
 
-#include <SDL2/SDL_keycode.h>
+#include "global.h"
 //enum Direction {UP = 111, DOWN = 116, LEFT = 113, RIGHT = 114, SPACE = 65, SAVE = 54};
-enum Direction {UP = SDLK_UP, DOWN = SDLK_DOWN, LEFT = SDLK_LEFT, RIGHT = SDLK_RIGHT, SPACE = SDLK_SPACE, SAVE = SDLK_c};
 
 
 typedef struct{
@@ -11,7 +10,6 @@ typedef struct{
     int y;
 } point;
 
-const int typeNums = 7;
 const int blockSize = 4;
 
 class Block {
@@ -20,9 +18,9 @@ public:
     Block(int);
     point * getPositions();
     void resetPositions();
-    int rotate(unsigned int **);
-    int translate(unsigned int **, Direction);
-    unsigned int getColor();
+    int rotate(int **);
+    int translate(int **, Direction);
+//    unsigned int getColor();
     int getType();
 private:
     int type;
@@ -31,22 +29,12 @@ private:
 
     const point TEMPLATES[7][blockSize] { //Note: PIVOT IS ALWAYS FIRST VALUE
             {{5,1}, {5,0}, {5,2}, {5,3}}, //I
-            {{5,1}, {5,0}, {6,0}, {6,1}}, //SQUARE
+            {{5,1}, {5,0}, {6,0}, {6,1}}, //O
             {{5,1}, {5,0}, {4,1}, {6,1}}, //T
             {{5,1}, {5,0}, {5,2}, {6,2}}, //L
             {{5,1}, {5,0}, {5,2}, {4,2}}, //J
             {{5,1}, {5,0}, {4,1}, {6,0}}, //S
             {{5,1}, {5,0}, {6,1}, {4,0}}  //Z
-    };
-
-    const unsigned int COLORS[7] {
-            0x00FFFF, //I - cyan
-            0xFFFF00, //SQUARE - yellow
-            0x800080, //T - purple
-            0xFF7F00, //L - orange
-            0x0000FF, //J - blue
-            0x00FF00, //S - green
-            0xFF0000  //Z - red
     };
 };
 

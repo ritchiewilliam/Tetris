@@ -3,9 +3,12 @@
 #include "grid.h"
 
 Grid::Grid() {
-    grid = new unsigned int *[GRID_X];
+    grid = new int *[GRID_X];
     for(int i = 0; i < GRID_X; i++) {
-        grid[i] = new unsigned int[GRID_Y];
+        grid[i] = new int[GRID_Y];
+        for(int j = 0; j < GRID_Y; j++) {
+            grid[i][j] = -1;
+        }
     }
     srand(time(nullptr));
 
@@ -30,7 +33,7 @@ int Grid::placeBlock() {
     //Place block onto the grid
     point * positions = block->getPositions();
     for(int i = 0; i < blockSize; i++) {
-        grid[positions[i].x][positions[i].y] = block->getColor();
+        grid[positions[i].x][positions[i].y] = block->getType();
     }
     clearRows(positions);
     delete(positions);
@@ -78,7 +81,7 @@ int Grid::moveBlock(unsigned int key) {
                 saveBlock();
                 blockSaved = true; //You should only be able to save block once to prevent constant swapping
             }
-        break;
+            break;
     }
     return 0;
 }
@@ -89,7 +92,7 @@ void Grid::clearRows(point * positions) {
         clearedRows[i] = positions[i].y;
         unsigned int temp[GRID_X];
         for(int j = 0; j < GRID_X; j++) {
-            if(grid[j][positions[i].y] == 0) {
+            if(grid[j][positions[i].y] == -1) {
                 for(int k = 0; k < j; k++) {
                     grid[k][positions[i].y] = temp[k];
                 }
@@ -97,7 +100,7 @@ void Grid::clearRows(point * positions) {
                 break;
             }
             temp[j] = grid[j][positions[i].y];
-            grid[j][positions[i].y] = 0;
+            grid[j][positions[i].y] = -1;
         }
     }
 
@@ -152,9 +155,9 @@ void Grid::shiftRows(int group[blockSize], int n){
     for(int i = max; i >= 0; i--) {
         unsigned int sum = 0;
         for(int j = 0; j < GRID_X; j++) {
-            sum += grid[j][i - d];
+            sum += (grid[j][i - d] + 1);
             grid[j][i] = grid[j][i - d];
-            grid[j][i - d] = 0;
+            grid[j][i - d] = -1;
 
         }
         if(!sum) {
@@ -163,13 +166,13 @@ void Grid::shiftRows(int group[blockSize], int n){
     }
 }
 
-void Grid::getGrid(unsigned int ** dest) {
+void Grid::getGrid(int ** dest) {
     for (int i = 0; i < GRID_X; i++) {
         std::memcpy(dest[i], grid[i], sizeof(unsigned int) * GRID_Y);
     }
     point *blockPositions = block->getPositions();
     for (int i = 0; i < blockSize; i++) {
-        dest[blockPositions[i].x][blockPositions[i].y] = block->getColor();
+        dest[blockPositions[i].x][blockPositions[i].y] = block->getType();
     }
     point temp[blockSize];
     std::memcpy(temp, blockPositions, sizeof(point) * blockSize);
@@ -178,7 +181,7 @@ void Grid::getGrid(unsigned int ** dest) {
     do {
         for (j = 0; j < blockSize; j++) {
             temp[j].y++;
-            if (temp[j].y > 19 || grid[temp[j].x][temp[j].y]) {
+            if (temp[j].y > 19 || (grid[temp[j].x][temp[j].y] + 1)) {
                 memcpy(temp, blockPositions, sizeof(point) * blockSize);
                 break;
             }
@@ -190,13 +193,14 @@ void Grid::getGrid(unsigned int ** dest) {
 
     difference = blockPositions[0].y - difference;
 
-    unsigned int color = block->getColor();
+    int type = block->getType();
 
     for (int i = 0; i < blockSize; i++) {
-        if(dest[blockPositions[i].x][blockPositions[i].y] != color) {
-            dest[blockPositions[i].x][blockPositions[i].y] = (color & 0xfefefe) >> 1;
+        if(dest[blockPositions[i].x][blockPositions[i].y] != type) {
+//            dest[blockPositions[i].x][blockPositions[i].y] = (color & 0xfefefe) >> 1;
+              dest[blockPositions[i].x][blockPositions[i].y] = type + typeNums;
         }
-        dest[blockPositions[i].x][blockPositions[i].y - difference] = color;
+        dest[blockPositions[i].x][blockPositions[i].y - difference] = type;
     }
 
     delete(blockPositions);
