@@ -35,7 +35,7 @@ Block::Block(int type) {
     pivot = position[0];
 }
 
-int Block::rotate(int ** grid) {
+int Block::rotate(unsigned int ** grid) {
     point temp[blockSize];
     std::memcpy(temp, position, sizeof(point) *  blockSize);
     for(point &i:position) {
@@ -51,7 +51,7 @@ int Block::rotate(int ** grid) {
         i.x += pivot.x;
         i.y += pivot.y;
 
-        if (i.x < 0 || i.y > 19 || i.x > 9 || (grid[i.x][i.y] > -1)) {
+        if (i.x < 0 || i.y > 19 || i.x > 9 || grid[i.x][i.y]) {
 
             memcpy(position, temp, sizeof(point) * blockSize);
             return 0;
@@ -60,13 +60,13 @@ int Block::rotate(int ** grid) {
     return 1;
 }
 
-int Block::translate(int ** grid, Direction d) {
+int Block::translate(unsigned int ** grid, Direction d) {
     point temp[blockSize];
     std::memcpy(temp, position, sizeof(point) * blockSize);
     for (point &i: position) {
         i.x += (d == RIGHT) - (d == LEFT);
         i.y += (d == DOWN);
-        if (i.x < 0 || i.y > 19 || i.x > 9 || (grid[i.x][i.y] > -1)) {
+        if (i.x < 0 || i.y > 19 || i.x > 9 || grid[i.x][i.y]) {
             memcpy(position, temp, sizeof(point) * blockSize);
             return 0;
         }
@@ -86,9 +86,9 @@ void Block::resetPositions() {
     memcpy(position, TEMPLATES[type], sizeof(point) * blockSize);
 }
 
-//unsigned int Block::getColor(){
-//    return COLORS[type];
-//}
+unsigned int Block::getColor(){
+    return COLORS[type];
+}
 
 int Block::getType(){
     return type;

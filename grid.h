@@ -1,6 +1,5 @@
 #ifndef TETRIS_GRID_H
 #define TETRIS_GRID_H
-#include "global.h"
 #include "block.h"
 
 const int GRID_Y = 20;
@@ -12,13 +11,12 @@ public:
     int placeBlock();
     int moveBlock(unsigned int);
     void clearRows(point *);
-    void getGrid(int **);
-    void quit();
+    void getGrid(unsigned int **);
 
 //    int getScore();
 
 private:
-    int **grid;
+    unsigned int **grid;
     Block * block;
     bool blockSaved = false;
     Block * savedBlock;

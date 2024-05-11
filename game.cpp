@@ -1,138 +1,89 @@
 #include <iostream>
-#include <SDL2/SDL.h>
-#include <string>
+#include <X11/Xlib.h>
+#include <unistd.h>
+#include <csignal>
 #include "grid.h"
-#include "texture.h"
 
-SDL_Window* window = nullptr;
-SDL_Renderer* renderer = nullptr;
+const int WIDTH = 700;
+const int HEIGHT = 2 * WIDTH;
 
-Texture *textures = nullptr;
+int blockDim;
+
+Display * dpy;
+Window win;
+GC gc;
 
 Grid grid;
-int * renderedGrid[GRID_X];
-int blockDim;
-bool running;
+unsigned int * paintedGrid[GRID_X];
 
-void quit() {
-    running = false;
+struct timespec t_begin;
+struct timespec t_end;
+int gameover = 0;
 
-    for(int *& i : renderedGrid) {
-        delete(i);
-    }
-    grid.quit();
-    textures->quit();
-    SDL_Quit();
+inline void init() {
+    dpy = XOpenDisplay(nullptr);
+    win = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 0, 0, WIDTH, HEIGHT, 0, WhitePixel(dpy, 0), BlackPixel(dpy, 0));
+    gc = XCreateGC(dpy, win, 0, nullptr);
+
+    XMapWindow(dpy, win);
+    blockDim = WIDTH/10;
+    blockDim = (blockDim * 20) > HEIGHT ? HEIGHT/20 : blockDim;
 }
 
-bool init_sdl(const char * title, int xpos, int ypos, int width, int height, int flags) {
-    // initialize SDL
-    if(SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO) >= 0) {
-        // if succeeded create our window
-        window = SDL_CreateWindow(title,
-                                  xpos, ypos,
-                                  width, height,
-                                  flags);
-
-        // if the window creation succeeded create our renderer
-        if(window != nullptr){
-            renderer = SDL_CreateRenderer(window, -1, 0);
-            if(renderer != nullptr) {
-                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            }
-            else {
-                std::cout << "Renderer Failed";
-                return false;
-            }
-        }
-        else {
-            std::cout << "Window Failed";
-            return false;
-        }
-
-    }
-    else
-    {
-        return false; // sdl could not initialize
-    }
-    return true;
-}
-
-void render() {
-    grid.getGrid(renderedGrid);
-    SDL_Rect rect;
-
-//    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-
-    SDL_RenderClear(renderer);
-
+void paintGrid(/*unsigned int ** result*/) {
+    grid.getGrid(paintedGrid);
     for(int i = 0; i < 10; i++) {
         for(int j = 0; j < 20; j++) {
-            rect = {i*blockDim, j*blockDim, blockDim, blockDim};
-            textures->renderTexture(renderer, &rect, renderedGrid[i][j]);
+            XSetForeground(dpy,gc, paintedGrid[i][j]);
+            XFillRectangle(dpy, win, gc, i*blockDim, j*blockDim, blockDim, blockDim);
         }
     }
-    // show the window
-    SDL_RenderPresent(renderer);
+//    XFlush(dpy);
 }
 
-void handleEvents() {
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_KEYDOWN) {
-            grid.moveBlock(event.key.keysym.sym);
-            render();
-        } else if (event.type == SDL_QUIT) {
-            running = false;
-        }
+void timedMove(int signum) {
+    clock_gettime(CLOCK_TAI, &t_end);
+    long d = ((t_end.tv_sec * 1000) + (t_end.tv_nsec / 1000000)) - ((t_begin.tv_sec * 1000) + (t_begin.tv_nsec / 1000000));
+    if(!grid.moveBlock(DOWN) && d > 200) {
+        gameover = grid.placeBlock();
     }
-}
+    paintGrid();
+    XFlush(dpy);
 
-bool update() {
-    if(!grid.moveBlock(DOWN)) {
-        if(grid.placeBlock()) {
-            return false;
-        }
-    }
-    render();
-    return true;
-}
-
-int main(int argc, char ** argv) {
-    int width = 700;
-    int height = width * 2;
-
-    if(init_sdl("Tetris", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN)) {
-        running = true;
+    if(gameover){
+        exit(0);
     }
     else {
-        return 1;
+        ualarm(500000, 0);
     }
-//    std::string path = argv[0];
-    if(argc > 1) {
-        textures = new Texture(renderer, argv[0], argv[1]);
-    }
-    else {
-        textures = new Texture(renderer, argv[0], nullptr);
-    }
-    blockDim = width/10;
-    blockDim = (blockDim * 20) > height ? height/20 : blockDim;
+}
 
-    for(int *& i : renderedGrid) {
-        i = new int[GRID_Y];
+int main() {
+
+    init();
+
+
+    XEvent event;
+    XSelectInput(dpy, win, KeyPressMask);
+
+    for(unsigned int *& i : paintedGrid) {
+        i = new unsigned int[GRID_Y];
     }
 
-    Uint32 lastTime = SDL_GetTicks();
-    Uint32 currentTime;
-    while(running) {
-        handleEvents();
-        currentTime = SDL_GetTicks();
-        if(currentTime - lastTime > 500) {
-            running = update();
-            lastTime = currentTime;
+    signal(SIGALRM, timedMove);
+
+    ualarm(500000, 0);
+
+    while(1) {
+        XNextEvent(dpy, &event);
+        clock_gettime(CLOCK_TAI, &t_begin);
+        if(event.type == KeyPress) {
+            grid.moveBlock(event.xkey.keycode);
+            paintGrid();
         }
-    }
 
-    quit();
+    }
+    XCloseDisplay(dpy);
+
     return 0;
 }
