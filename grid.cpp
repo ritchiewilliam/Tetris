@@ -3,78 +3,63 @@
 #include "grid.h"
 
 Grid::Grid() {
-    grid = new int *[GRID_X];
+    //grid = new int *[GRID_X];
     for(int i = 0; i < GRID_X; i++) {
-        grid[i] = new int[GRID_Y];
+        //grid[i] = new int[GRID_Y];
         for(int j = 0; j < GRID_Y; j++) {
             grid[i][j] = -1;
         }
     }
     srand(time(nullptr));
 
-    block = new Block(rand() % typeNums);
-    savedBlock = nullptr;
+    int prevType = block.getType();
+    for(int i = 0; i < queueSize; i++) {
+	nextBlocks.push_front(differentType(prevType));
+	prevType = nextBlocks.front();
+    }
 //    score = 0;
 }
 
-void Grid::quit(){
-    for(int i = 0; i < GRID_X; i++) {
-        delete(grid[i]);
-    }
-    delete(grid);
-    delete(block);
-    delete(savedBlock);
-}
-
-int Grid::placeBlock() {
+bool Grid::placeBlock() {
     //Move block as far down as it can go
-    while(block->translate(grid, DOWN));
+    while(block.translate(grid, DOWN));
 
     //Place block onto the grid
-    point * positions = block->getPositions();
+    std::array <point, blockSize> positions = block.getPositions();
     for(int i = 0; i < blockSize; i++) {
-        grid[positions[i].x][positions[i].y] = block->getType();
+        grid[positions[i].x][positions[i].y] = block.getType();
     }
     clearRows(positions);
-    delete(positions);
 
-    //Store type for next initialization and get rid of old block
-    int prevType = block->getType();
-
-    delete(block);
-
-    //Create new block different from the last one
-    block = new Block(differentType(prevType));
+    //Create new block
+    block = Block(newBlock());  //NEW BLOCK
 
     //Make sure nothing is in the way of the newly created block
-    positions = block->getPositions();
+    positions = block.getPositions();
     for(int i = 0; i < blockSize; i++) {
         if(grid[positions[i].x][positions[i].y] > 0) {
-            delete(positions);
             //Notify whoever called that the game is over now
-            return 1;
+            return false;
         }
     }
-
     blockSaved = false; //New block so saved block can be replaced again
 
-    delete(positions);
-    return 0;
+    return true;
 }
 
-int Grid::moveBlock(unsigned int key) {
+bool Grid::moveBlock(unsigned int key) {
 
     switch(key) {
         case Direction::RIGHT:
         case Direction::LEFT:
         case Direction::DOWN:
-            return block->translate(grid, static_cast<Direction>(key));
+            return block.translate(grid, static_cast<Direction>(key));
             break;
         case Direction::SPACE:
             placeBlock();
             break;
         case Direction::UP:
-            block->rotate(grid);
+            block.rotate(grid);
             break;
         case Direction::SAVE:
             if(!blockSaved) {
@@ -83,14 +68,18 @@ int Grid::moveBlock(unsigned int key) {
             }
             break;
     }
-    return 0;
+    return false;
 }
 
-void Grid::clearRows(point * positions) {
+void Grid::clearRows(std::array <point, blockSize> positions) {
+/*
+    for(int i = 0; i < 4; i++) {
+	std::cout << '(' << positions[i].x << ',' << positions[i].y << ')' << std::endl;
+    }*/
     int clearedRows[blockSize];
     for(int i = 0; i < blockSize; i++) {
         clearedRows[i] = positions[i].y;
-        unsigned int temp[GRID_X];
+        int temp[GRID_X];
         for(int j = 0; j < GRID_X; j++) {
             if(grid[j][positions[i].y] == -1) {
                 for(int k = 0; k < j; k++) {
@@ -135,14 +124,13 @@ void Grid::clearRows(point * positions) {
         n = l * order + r * (!order);
         shiftRows(groupings[!order], n);
     }
-    else{
+    else {
         //Just do left if there is no r
         shiftRows(groupings[0], l);
     }
-    return;
 }
 
-void Grid::shiftRows(int group[blockSize], int n){
+void Grid::shiftRows(const int group[blockSize], int n){
     int max = -1;
     int min = GRID_Y;
     for(int i = 0; i < n; i++) {
@@ -166,44 +154,50 @@ void Grid::shiftRows(int group[blockSize], int n){
     }
 }
 
-void Grid::getGrid(int ** dest) {
-    for (int i = 0; i < GRID_X; i++) {
-        std::memcpy(dest[i], grid[i], sizeof(unsigned int) * GRID_Y);
-    }
-    point *blockPositions = block->getPositions();
+void Grid::getGrid(int (&dest)[GRID_X][GRID_Y]) {
+    //for (int i = 0; i < GRID_X; i++) {
+    std::memcpy(dest, grid, sizeof(unsigned int) * GRID_X * GRID_Y);
+    //}
+    //std::copy(std::begin(grid), std::end(grid), dest);
+
+    std::array<point, blockSize> blockPositions = block.getPositions();
     for (int i = 0; i < blockSize; i++) {
-        dest[blockPositions[i].x][blockPositions[i].y] = block->getType();
+        dest[blockPositions[i].x][blockPositions[i].y] = block.getType();
     }
-    point temp[blockSize];
-    std::memcpy(temp, blockPositions, sizeof(point) * blockSize);
+
+    std::array<point, blockSize> temp;
+    std::copy(std::begin(blockPositions), std::end(blockPositions), std::begin(temp));
+    //std::memcpy(temp, blockPositions, sizeof(point) * blockSize);
     int j;
     int difference = temp[0].y;
     do {
         for (j = 0; j < blockSize; j++) {
             temp[j].y++;
             if (temp[j].y > 19 || (grid[temp[j].x][temp[j].y] + 1)) {
-                memcpy(temp, blockPositions, sizeof(point) * blockSize);
+		std::copy(std::begin(blockPositions), std::end(blockPositions), std::begin(temp));
+                //memcpy(temp, blockPositions, sizeof(point) * blockSize);
                 break;
             }
         }
         if(j == blockSize) {
-            memcpy(blockPositions, temp, sizeof(point) * blockSize);
+	    std::copy(std::begin(temp), std::end(temp), std::begin(blockPositions));
+            //memcpy(blockPositions, temp, sizeof(point) * blockSize);
         }
     } while (j == blockSize);
 
     difference = blockPositions[0].y - difference;
 
-    int type = block->getType();
+    int type = block.getType();
 
     for (int i = 0; i < blockSize; i++) {
         if(dest[blockPositions[i].x][blockPositions[i].y] != type) {
 //            dest[blockPositions[i].x][blockPositions[i].y] = (color & 0xfefefe) >> 1;
-              dest[blockPositions[i].x][blockPositions[i].y] = type + typeNums;
+            dest[blockPositions[i].x][blockPositions[i].y] = type + typeNums;
         }
         dest[blockPositions[i].x][blockPositions[i].y - difference] = type;
     }
 
-    delete(blockPositions);
+    //delete(blockPositions);
 }
 
 int Grid::differentType(int prevType) {
@@ -216,19 +210,41 @@ int Grid::differentType(int prevType) {
 }
 
 void Grid::saveBlock() {
-    if(savedBlock != nullptr) {
-        Block * temp;
-        block->resetPositions();
+    if(savedBlock.getType() != 7) {
+        Block temp = Block(7);
+        block.resetPositions();
         temp = block;
         block = savedBlock;
         savedBlock = temp;
     }
     else {
-        block->resetPositions();
+        block.resetPositions();
         savedBlock = block;
-        block = new Block(differentType(savedBlock->getType()));
+        block = Block(newBlock()); //NEW BLOCK
     }
 }
+
+int Grid::newBlock() {
+	int blockType = nextBlocks.front();
+	nextBlocks.pop_front();
+	nextBlocks.push_back(differentType(nextBlocks.back()));
+	return blockType;
+/*
+	char conv[typeNums] = {'I', 'O', 'T', 'L', 'J', 'S', 'Z'};
+	for (Block blk : blocks) {
+        	std::cout << conv[blk.getType()] << ", ";
+    	}
+	std::cout << std::endl;*/
+}
+
+int Grid::getSaved() {
+	return savedBlock.getType();
+}
+
+const std::deque<int> Grid::getNext() {
+	return nextBlocks;
+}
+
 //
 //int Grid::getScore() {
 //    return this->score;

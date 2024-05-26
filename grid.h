@@ -2,30 +2,35 @@
 #define TETRIS_GRID_H
 #include "global.h"
 #include "block.h"
-
-const int GRID_Y = 20;
-const int GRID_X = 10;
+#include <deque>
+#include <SDL2/SDL_image.h>	
 
 class Grid {
 public:
     Grid();
-    int placeBlock();
-    int moveBlock(unsigned int);
-    void clearRows(point *);
-    void getGrid(int **);
-    void quit();
-
+    bool placeBlock();
+    bool moveBlock(unsigned int);
+    void clearRows(std::array <point, blockSize>);
+    void getGrid(int (&dest)[GRID_X][GRID_Y]);
+    int getSaved();
+    const std::deque<int> getNext();
+    
 //    int getScore();
 
 private:
-    int **grid;
-    Block * block;
+    int grid[GRID_X][GRID_Y];
+
+    std::deque <int> nextBlocks;
+    Block block;
     bool blockSaved = false;
-    Block * savedBlock;
+    Block savedBlock = Block(7);
+//    Texture * textures;
 //    int score;
 
-    void shiftRows(int[blockSize], int);
+    void shiftRows(const int[blockSize], int);
     int differentType(int);
+
+    int newBlock();
     void saveBlock();
 };
 

@@ -6,15 +6,20 @@
 
 class Texture {
 public:
-    Texture(SDL_Renderer*, std::string path, const char* name);
-    int setTexture(const char*, SDL_Renderer*);
-    void renderTexture(SDL_Renderer*, SDL_Rect*, int);
-    void quit();
+    Texture(SDL_Renderer*, const std::string& path);
+    Texture(SDL_Renderer * renderer, const Texture &texture);
+    ~Texture();
+
+
+    void renderTexture(SDL_Renderer *renderer, SDL_Rect canvas, SDL_Rect rect);
+    void renderTexture(SDL_Renderer *renderer, SDL_Rect rect);
+    void setTexture(SDL_Renderer* renderer, const std::string& path);
+    void setColorMod(uint8_t r, uint8_t g, uint8_t b);
+    void setAlphaMod(uint8_t a);
+
 private:
     std::string path;
-    int loaded = 0;
-    SDL_Surface* surfaces[typeNums];
-    SDL_Texture* textures[typeNums];
-//    SDL_Rect dimensions;
+    SDL_Texture* sdlTexture;
+    SDL_Surface* sdlSurface;
 };
 #endif //TETRIS_TEXTURE_H
